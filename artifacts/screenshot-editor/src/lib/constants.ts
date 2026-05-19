@@ -184,6 +184,18 @@ export const THEMES: Record<ThemeId, Theme> = {
   },
 };
 
+export const PATTERN_LABEL: Record<string, string> = {
+  none:  "None",
+  mesh:  "Mesh",
+  grain: "Grain",
+  glass: "Glass",
+  blobs: "Blobs",
+  grid:  "Grid",
+  glow:  "Glow",
+  paper: "Paper",
+  depth: "Depth",
+};
+
 export const STORAGE_KEY = "app-store-screenshots:project:v1";
 
 export const DEVICE_LABEL: Record<Device, string> = {

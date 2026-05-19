@@ -12,9 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { LAYOUT_HINT, LAYOUT_LABEL, THEMES } from "@/lib/constants";
+import { LAYOUT_HINT, LAYOUT_LABEL, PATTERN_LABEL, THEMES } from "@/lib/constants";
 import { pickText, writeLocalized } from "@/lib/locale";
-import type { ElementId, ElementTransform, Slide, SlideLayout, Theme, ThemeId } from "@/lib/types";
+import type { ElementId, ElementTransform, PatternId, Slide, SlideLayout, Theme, ThemeId } from "@/lib/types";
 import { ScreenshotPicker } from "./screenshot-picker";
 
 type Props = {
@@ -115,6 +115,54 @@ export function Inspector({ slide, locale, theme, themeId, setThemeId, selectedE
               );
             })}
           </div>
+        </div>
+
+        {/* ── Pattern section ──────────────────────────────── */}
+        <div className="space-y-2">
+          <Label className="text-xs">Pattern</Label>
+          <div className="grid grid-cols-3 gap-1">
+            {Object.entries(PATTERN_LABEL).map(([id, label]) => {
+              const active = (slide.pattern ?? "none") === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => onChange({ pattern: id as PatternId })}
+                  aria-pressed={active}
+                  className="rounded-md border py-1.5 text-center text-[10px] font-semibold transition-all"
+                  style={
+                    active
+                      ? { borderColor: theme.accent, backgroundColor: theme.accent + "22", color: theme.accent }
+                      : { borderColor: "hsl(var(--border))", backgroundColor: "hsl(var(--card))", color: "hsl(var(--muted-foreground))" }
+                  }
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {(slide.pattern ?? "none") !== "none" && (
+            <div className="space-y-1 pt-0.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-[11px] text-muted-foreground">Intensity</Label>
+                <span className="text-[11px] tabular-nums text-muted-foreground">
+                  {slide.patternIntensity ?? 50}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={slide.patternIntensity ?? 50}
+                onChange={(e) => onChange({ patternIntensity: Number(e.target.value) })}
+                className="w-full accent-current"
+                style={{ accentColor: theme.accent }}
+                aria-label="Pattern intensity"
+              />
+            </div>
+          )}
         </div>
 
         <div className="h-px bg-border" />

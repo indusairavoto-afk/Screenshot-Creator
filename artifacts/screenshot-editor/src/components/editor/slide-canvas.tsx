@@ -6,6 +6,7 @@ import type {
   ElementId,
   ElementTransform,
   Orientation,
+  PatternId,
   Slide,
   Theme,
 } from "@/lib/types";
@@ -249,6 +250,139 @@ function backgroundFor(theme: Theme, inverted?: boolean) {
     return `linear-gradient(160deg, ${theme.bgAlt} 0%, ${shade(theme.bgAlt, -8)} 100%)`;
   }
   return `linear-gradient(160deg, ${theme.bg} 0%, ${shade(theme.bg, -6)} 100%)`;
+}
+
+// ---------- Pattern overlay ----------
+
+function toHexAlpha(alpha: number): string {
+  return Math.round(Math.min(1, Math.max(0, alpha)) * 255)
+    .toString(16)
+    .padStart(2, "0");
+}
+
+function PatternLayer({
+  pattern,
+  intensity,
+  accent,
+}: {
+  pattern: PatternId | undefined;
+  intensity: number;
+  accent: string;
+}) {
+  if (!pattern || pattern === "none") return null;
+  const a = Math.min(1, Math.max(0, intensity / 100));
+
+  const base: React.CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    pointerEvents: "none",
+    zIndex: 1,
+  };
+
+  if (pattern === "mesh") {
+    return (
+      <div
+        aria-hidden
+        style={{
+          ...base,
+          background: `
+            radial-gradient(circle at 20% 30%, ${accent}${toHexAlpha(a * 0.85)} 0%, transparent 55%),
+            radial-gradient(circle at 80% 70%, ${accent}${toHexAlpha(a * 0.65)} 0%, transparent 55%)
+          `,
+          filter: `blur(${50 + a * 30}px)`,
+        }}
+      />
+    );
+  }
+  if (pattern === "grain") {
+    const url = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E")`;
+    return (
+      <div
+        aria-hidden
+        style={{ ...base, backgroundImage: url, backgroundSize: "256px 256px", opacity: a * 0.38, mixBlendMode: "overlay" }}
+      />
+    );
+  }
+  if (pattern === "glass") {
+    return (
+      <div
+        aria-hidden
+        style={{
+          ...base,
+          background: `linear-gradient(135deg, rgba(255,255,255,${a * 0.22}) 0%, rgba(255,255,255,0) 55%, rgba(255,255,255,${a * 0.1}) 100%)`,
+        }}
+      />
+    );
+  }
+  if (pattern === "blobs") {
+    return (
+      <div
+        aria-hidden
+        style={{
+          ...base,
+          background: `
+            radial-gradient(ellipse 65% 55% at 10% 20%, ${accent}${toHexAlpha(a * 0.60)} 0%, transparent 70%),
+            radial-gradient(ellipse 50% 60% at 88% 80%, ${accent}${toHexAlpha(a * 0.50)} 0%, transparent 70%),
+            radial-gradient(ellipse 42% 38% at 52% 52%, ${accent}${toHexAlpha(a * 0.28)} 0%, transparent 70%)
+          `,
+          filter: `blur(${28 + a * 18}px)`,
+        }}
+      />
+    );
+  }
+  if (pattern === "grid") {
+    const la = a * 0.28;
+    return (
+      <div
+        aria-hidden
+        style={{
+          ...base,
+          backgroundImage: `
+            repeating-linear-gradient(0deg,   rgba(255,255,255,${la}) 0px, rgba(255,255,255,${la}) 1px, transparent 1px, transparent 52px),
+            repeating-linear-gradient(90deg, rgba(255,255,255,${la}) 0px, rgba(255,255,255,${la}) 1px, transparent 1px, transparent 52px)
+          `,
+        }}
+      />
+    );
+  }
+  if (pattern === "glow") {
+    return (
+      <div
+        aria-hidden
+        style={{
+          ...base,
+          background: `
+            radial-gradient(circle at 50% 45%, ${accent}${toHexAlpha(a * 0.55)} 0%, transparent 65%),
+            radial-gradient(circle at 5%  95%, ${accent}${toHexAlpha(a * 0.35)} 0%, transparent 50%)
+          `,
+        }}
+      />
+    );
+  }
+  if (pattern === "paper") {
+    const url = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23p)'/%3E%3C/svg%3E")`;
+    return (
+      <div
+        aria-hidden
+        style={{ ...base, backgroundImage: url, backgroundSize: "200px 200px", opacity: a * 0.22, mixBlendMode: "soft-light" }}
+      />
+    );
+  }
+  if (pattern === "depth") {
+    return (
+      <div
+        aria-hidden
+        style={{
+          ...base,
+          background: `
+            radial-gradient(ellipse 130% 75% at 50% 115%, rgba(0,0,0,${a * 0.72}) 0%, transparent 60%),
+            radial-gradient(ellipse 110% 45% at 50% -15%, rgba(0,0,0,${a * 0.32}) 0%, transparent 58%)
+          `,
+        }}
+      />
+    );
+  }
+  return null;
 }
 
 function shade(hex: string, percent: number) {
@@ -623,6 +757,12 @@ export function SlideCanvas({
     >
       <Blob cW={cW} color={theme.accent} x={-15} y={-10} size={55} opacity={inverted ? 0.25 : 0.32} />
       <Blob cW={cW} color={theme.accent} x={70} y={75} size={45} opacity={inverted ? 0.18 : 0.25} />
+
+      <PatternLayer
+        pattern={slide.pattern}
+        intensity={slide.patternIntensity ?? 50}
+        accent={theme.accent}
+      />
 
       {secondaryRect &&
         renderDevice(

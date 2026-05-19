@@ -38,6 +38,17 @@ export type ElementId = "caption" | "device" | "deviceSecondary";
 // ProjectState.locales.
 export type LocalizedText = Partial<Record<string, string>>;
 
+export type PatternId =
+  | "none"
+  | "mesh"
+  | "grain"
+  | "glass"
+  | "blobs"
+  | "grid"
+  | "glow"
+  | "paper"
+  | "depth";
+
 export type Slide = {
   id: string;
   layout: SlideLayout;
@@ -46,6 +57,8 @@ export type Slide = {
   screenshot: string;         // path under /screenshots/ — may contain {locale}
   screenshotSecondary?: string; // for two-devices layout — may contain {locale}
   inverted?: boolean;         // dark background variant
+  pattern?: PatternId;        // texture/style overlay above bg, below content
+  patternIntensity?: number;  // 0–100, default 50
   // Per-element overrides; when present, replaces layout default placement.
   transforms?: Partial<Record<ElementId, ElementTransform>>;
 };
