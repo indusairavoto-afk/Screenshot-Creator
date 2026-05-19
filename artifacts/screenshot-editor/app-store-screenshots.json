@@ -1,6 +1,6 @@
 {
   "appName": "My App",
-  "themeId": "rose",
+  "themeId": "midnight",
   "locales": [
     "en"
   ],
@@ -30,7 +30,9 @@
             "zIndex": 3
           }
         },
-        "inverted": false
+        "inverted": false,
+        "pattern": "glow",
+        "patternIntensity": 70
       },
       {
         "id": "s_mpc7phxa_1",

@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { LAYOUT_HINT, LAYOUT_LABEL, PATTERN_LABEL, THEMES } from "@/lib/constants";
+import { COMBINATIONS, LAYOUT_HINT, LAYOUT_LABEL, PATTERN_LABEL, THEMES } from "@/lib/constants";
 import { pickText, writeLocalized } from "@/lib/locale";
 import type { ElementId, ElementTransform, PatternId, Slide, SlideLayout, Theme, ThemeId } from "@/lib/types";
 import { ScreenshotPicker } from "./screenshot-picker";
@@ -63,6 +63,109 @@ export function Inspector({ slide, locale, theme, themeId, setThemeId, selectedE
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto p-3">
+
+        {/* ── Quick-start combinations ─────────────────────── */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Quick Start</Label>
+            <span className="text-[10px] text-muted-foreground">theme + pattern in one click</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {COMBINATIONS.map((combo) => {
+              const t = THEMES[combo.themeId];
+              const isActive =
+                themeId === combo.themeId &&
+                (slide.pattern ?? "none") === combo.pattern &&
+                (slide.patternIntensity ?? 50) === combo.patternIntensity;
+              return (
+                <button
+                  key={combo.name}
+                  type="button"
+                  title={combo.description}
+                  aria-pressed={isActive}
+                  onClick={() => {
+                    setThemeId(combo.themeId);
+                    onChange({ pattern: combo.pattern as PatternId, patternIntensity: combo.patternIntensity });
+                  }}
+                  className="group flex flex-col overflow-hidden rounded-xl text-left transition-all"
+                  style={{
+                    boxShadow: isActive
+                      ? `0 0 0 2px ${t.accent}, 0 0 0 5px ${t.accent}30`
+                      : "0 0 0 1px hsl(var(--border))",
+                  }}
+                >
+                  {/* Color preview strip */}
+                  <span
+                    className="block h-10 w-full"
+                    style={{
+                      background: `linear-gradient(120deg, ${t.bg} 0%, ${t.bg} 42%, ${t.accent} 42%, ${t.accent} 68%, ${t.bgAlt} 68%)`,
+                    }}
+                  >
+                    {/* Pattern hint: tiny repeating lines for grid, a blurred dot for glow, etc. */}
+                    {combo.pattern === "grid" && (
+                      <span
+                        className="block h-full w-full opacity-40"
+                        style={{
+                          backgroundImage: `repeating-linear-gradient(0deg,rgba(255,255,255,0.5) 0px,rgba(255,255,255,0.5) 1px,transparent 1px,transparent 10px),repeating-linear-gradient(90deg,rgba(255,255,255,0.5) 0px,rgba(255,255,255,0.5) 1px,transparent 1px,transparent 10px)`,
+                        }}
+                      />
+                    )}
+                    {combo.pattern === "glow" && (
+                      <span
+                        className="block h-full w-full"
+                        style={{
+                          background: `radial-gradient(circle at 50% 50%, ${t.accent}88 0%, transparent 70%)`,
+                        }}
+                      />
+                    )}
+                    {combo.pattern === "depth" && (
+                      <span
+                        className="block h-full w-full"
+                        style={{
+                          background: `linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.45) 100%)`,
+                        }}
+                      />
+                    )}
+                    {combo.pattern === "glass" && (
+                      <span
+                        className="block h-full w-full"
+                        style={{
+                          background: `linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 55%)`,
+                        }}
+                      />
+                    )}
+                  </span>
+                  {/* Name row */}
+                  <span
+                    className="flex items-center gap-1.5 px-2 py-1.5"
+                    style={{ backgroundColor: isActive ? t.accent + "18" : "hsl(var(--card))" }}
+                  >
+                    <span className="text-sm leading-none">{combo.emoji}</span>
+                    <span className="flex-1 min-w-0">
+                      <span
+                        className="block truncate text-[10px] font-bold leading-snug"
+                        style={{ color: isActive ? t.accent : "hsl(var(--foreground))" }}
+                      >
+                        {combo.name}
+                      </span>
+                      <span className="block truncate text-[9px] leading-snug text-muted-foreground">
+                        {combo.description}
+                      </span>
+                    </span>
+                    {isActive && (
+                      <span
+                        className="h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: t.accent }}
+                      />
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="h-px bg-border" />
 
         {/* ── Theme picker ─────────────────────────────────── */}
         <div className="space-y-2">

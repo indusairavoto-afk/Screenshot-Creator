@@ -184,6 +184,26 @@ export const THEMES: Record<ThemeId, Theme> = {
   },
 };
 
+export type Combination = {
+  name: string;
+  emoji: string;
+  themeId: ThemeId;
+  pattern: string;
+  patternIntensity: number;
+  description: string;
+};
+
+export const COMBINATIONS: Combination[] = [
+  { name: "Midnight Glow",    emoji: "🌌", themeId: "midnight",       pattern: "glow",  patternIntensity: 70, description: "Deep purple + aurora glow" },
+  { name: "Arctic Grid",      emoji: "❄️", themeId: "arctic",         pattern: "grid",  patternIntensity: 55, description: "Icy clean + structure" },
+  { name: "Sunset Mesh",      emoji: "🌅", themeId: "sunset",         pattern: "mesh",  patternIntensity: 60, description: "Warm amber + soft gradient" },
+  { name: "Forest Depth",     emoji: "🌲", themeId: "forest",         pattern: "depth", patternIntensity: 65, description: "Dark green + cinematic vignette" },
+  { name: "Rose Blobs",       emoji: "🌸", themeId: "rose",           pattern: "blobs", patternIntensity: 55, description: "Dark rose + organic shapes" },
+  { name: "Neon Paper",       emoji: "⚡", themeId: "neon",           pattern: "paper", patternIntensity: 45, description: "Pure black + tactile grain" },
+  { name: "Clean Grain",      emoji: "🤍", themeId: "clean-light",    pattern: "grain", patternIntensity: 40, description: "Light + editorial texture" },
+  { name: "Ocean Glass",      emoji: "🌊", themeId: "ocean-fresh",    pattern: "glass", patternIntensity: 55, description: "Sky blue + frosted overlay" },
+];
+
 export const PATTERN_LABEL: Record<string, string> = {
   none:  "None",
   mesh:  "Mesh",
