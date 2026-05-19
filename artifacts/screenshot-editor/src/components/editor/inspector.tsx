@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { COMBINATIONS, LAYOUT_HINT, LAYOUT_LABEL, PATTERN_LABEL, THEMES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { pickText, writeLocalized } from "@/lib/locale";
 import type { ElementId, ElementTransform, PatternId, Slide, SlideLayout, Theme, ThemeId } from "@/lib/types";
 import { ScreenshotPicker } from "./screenshot-picker";
@@ -33,50 +34,98 @@ const ELEMENT_LABEL: Record<ElementId, string> = {
   deviceSecondary: "Back device",
 };
 
+function SectionHeader({
+  title,
+  open,
+  onToggle,
+  hint,
+}: {
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+  hint?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex w-full items-center justify-between px-4 py-2.5 transition-colors hover:bg-muted/40"
+    >
+      <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+        {title}
+      </span>
+      <div className="flex items-center gap-2">
+        {hint && !open && (
+          <span className="text-[10px] text-muted-foreground">{hint}</span>
+        )}
+        <ChevronDown
+          className={cn(
+            "h-3.5 w-3.5 text-muted-foreground/60 transition-transform duration-200",
+            open && "rotate-180"
+          )}
+        />
+      </div>
+    </button>
+  );
+}
+
 export function Inspector({ slide, locale, theme, themeId, setThemeId, selectedElementId, onChange }: Props) {
   const isFeatureGraphic = slide.layout === "feature-graphic";
   const isNoDevice = slide.layout === "no-device";
   const localeLabel = slide.label?.[locale] ?? "";
   const localeHeadline = slide.headline?.[locale] ?? "";
-  // When the active locale is empty, surface the fallback (typically en) as
-  // the placeholder so the user sees what they're translating from.
   const headlineDefault = isFeatureGraphic ? "Your tagline." : "One idea\nper slide.";
   const labelPlaceholder = localeLabel ? "FEATURE 01" : pickText(slide.label, locale) || "FEATURE 01";
   const headlinePlaceholder = localeHeadline
     ? headlineDefault
     : pickText(slide.headline, locale) || headlineDefault;
 
+  const [openAppearance, setOpenAppearance] = React.useState(true);
+  const [openContent, setOpenContent] = React.useState(true);
+  const [openMedia, setOpenMedia] = React.useState(true);
+  const [openElements, setOpenElements] = React.useState(false);
+
   function setLocaleField(key: "label" | "headline", value: string) {
     onChange({ [key]: writeLocalized(slide[key], locale, value) } as Partial<Slide>);
   }
 
+  const hasMedia = !isFeatureGraphic && !isNoDevice;
+  const activePattern = slide.pattern ?? "none";
+  const activeIntensity = slide.patternIntensity ?? 50;
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b p-3">
-        <div className="flex items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold">Slide settings</h2>
-          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            editing · {locale.toUpperCase()}
-          </span>
+    <div className="flex h-full flex-col bg-background">
+
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
+        <div>
+          <h2 className="text-[13px] font-semibold leading-none">Slide settings</h2>
+          <p className="mt-1 text-[11px] leading-none text-muted-foreground">
+            {LAYOUT_HINT[slide.layout]}
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">{LAYOUT_HINT[slide.layout]}</p>
+        <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {locale}
+        </span>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto">
 
-        {/* ── Quick-start combinations ─────────────────────── */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">Quick Start</Label>
-            <span className="text-[10px] text-muted-foreground">theme + pattern in one click</span>
-          </div>
-          <div className="grid grid-cols-2 gap-1.5">
+        {/* ── Quick Start ─────────────────────────────────── */}
+        <div className="border-b px-4 pb-3 pt-3">
+          <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Quick Start
+          </p>
+          <div
+            className="flex gap-2 overflow-x-auto pb-1"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
+          >
             {COMBINATIONS.map((combo) => {
               const t = THEMES[combo.themeId];
               const isActive =
                 themeId === combo.themeId &&
-                (slide.pattern ?? "none") === combo.pattern &&
-                (slide.patternIntensity ?? 50) === combo.patternIntensity;
+                activePattern === combo.pattern &&
+                activeIntensity === combo.patternIntensity;
               return (
                 <button
                   key={combo.name}
@@ -87,132 +136,30 @@ export function Inspector({ slide, locale, theme, themeId, setThemeId, selectedE
                     setThemeId(combo.themeId);
                     onChange({ pattern: combo.pattern as PatternId, patternIntensity: combo.patternIntensity });
                   }}
-                  className="group flex flex-col overflow-hidden rounded-xl text-left transition-all"
+                  className="flex w-[78px] shrink-0 flex-col overflow-hidden rounded-xl transition-all"
                   style={{
                     boxShadow: isActive
-                      ? `0 0 0 2px ${t.accent}, 0 0 0 5px ${t.accent}30`
+                      ? `0 0 0 2px ${t.accent}, 0 0 0 5px ${t.accent}28`
                       : "0 0 0 1px hsl(var(--border))",
                   }}
                 >
-                  {/* Color preview strip */}
                   <span
-                    className="block h-10 w-full"
+                    className="block h-9 w-full"
                     style={{
                       background: `linear-gradient(120deg, ${t.bg} 0%, ${t.bg} 42%, ${t.accent} 42%, ${t.accent} 68%, ${t.bgAlt} 68%)`,
                     }}
-                  >
-                    {/* Pattern hint: tiny repeating lines for grid, a blurred dot for glow, etc. */}
-                    {combo.pattern === "grid" && (
-                      <span
-                        className="block h-full w-full opacity-40"
-                        style={{
-                          backgroundImage: `repeating-linear-gradient(0deg,rgba(255,255,255,0.5) 0px,rgba(255,255,255,0.5) 1px,transparent 1px,transparent 10px),repeating-linear-gradient(90deg,rgba(255,255,255,0.5) 0px,rgba(255,255,255,0.5) 1px,transparent 1px,transparent 10px)`,
-                        }}
-                      />
-                    )}
-                    {combo.pattern === "glow" && (
-                      <span
-                        className="block h-full w-full"
-                        style={{
-                          background: `radial-gradient(circle at 50% 50%, ${t.accent}88 0%, transparent 70%)`,
-                        }}
-                      />
-                    )}
-                    {combo.pattern === "depth" && (
-                      <span
-                        className="block h-full w-full"
-                        style={{
-                          background: `linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.45) 100%)`,
-                        }}
-                      />
-                    )}
-                    {combo.pattern === "glass" && (
-                      <span
-                        className="block h-full w-full"
-                        style={{
-                          background: `linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 55%)`,
-                        }}
-                      />
-                    )}
-                  </span>
-                  {/* Name row */}
+                  />
                   <span
-                    className="flex items-center gap-1.5 px-2 py-1.5"
+                    className="flex items-center gap-1 px-1.5 py-1"
                     style={{ backgroundColor: isActive ? t.accent + "18" : "hsl(var(--card))" }}
                   >
-                    <span className="text-sm leading-none">{combo.emoji}</span>
-                    <span className="flex-1 min-w-0">
-                      <span
-                        className="block truncate text-[10px] font-bold leading-snug"
-                        style={{ color: isActive ? t.accent : "hsl(var(--foreground))" }}
-                      >
-                        {combo.name}
-                      </span>
-                      <span className="block truncate text-[9px] leading-snug text-muted-foreground">
-                        {combo.description}
-                      </span>
-                    </span>
-                    {isActive && (
-                      <span
-                        className="h-1.5 w-1.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: t.accent }}
-                      />
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="h-px bg-border" />
-
-        {/* ── Theme picker ─────────────────────────────────── */}
-        <div className="space-y-2">
-          <Label className="text-xs">Theme</Label>
-          <div className="grid grid-cols-2 gap-1.5">
-            {(Object.values(THEMES) as Theme[]).map((t) => {
-              const active = themeId === t.id;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setThemeId(t.id)}
-                  aria-pressed={active}
-                  title={t.name}
-                  className="group relative flex flex-col overflow-hidden rounded-lg transition-all"
-                  style={{
-                    boxShadow: active
-                      ? `0 0 0 2px ${t.accent}, 0 0 0 4px ${t.accent}30`
-                      : "0 0 0 1px hsl(var(--border))",
-                  }}
-                >
-                  {/* Color strip */}
-                  <span
-                    className="block h-8 w-full"
-                    style={{
-                      background: `linear-gradient(110deg, ${t.bg} 0%, ${t.bg} 55%, ${t.accent} 55%, ${t.accent} 75%, ${t.bgAlt} 75%)`,
-                    }}
-                  />
-                  {/* Name row */}
-                  <span
-                    className="flex items-center justify-between px-2 py-1"
-                    style={{
-                      backgroundColor: active ? t.accent + "18" : "hsl(var(--card))",
-                    }}
-                  >
+                    <span className="text-[11px] leading-none">{combo.emoji}</span>
                     <span
-                      className="truncate text-[10px] font-semibold leading-none"
-                      style={{ color: active ? t.accent : "hsl(var(--foreground))" }}
+                      className="truncate text-[9px] font-semibold leading-none"
+                      style={{ color: isActive ? t.accent : "hsl(var(--foreground))" }}
                     >
-                      {t.name}
+                      {combo.name}
                     </span>
-                    {active && (
-                      <span
-                        className="ml-1 h-1.5 w-1.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: t.accent }}
-                      />
-                    )}
                   </span>
                 </button>
               );
@@ -220,206 +167,299 @@ export function Inspector({ slide, locale, theme, themeId, setThemeId, selectedE
           </div>
         </div>
 
-        {/* ── Pattern section ──────────────────────────────── */}
-        <div className="space-y-2">
-          <Label className="text-xs">Pattern</Label>
-          <div className="grid grid-cols-3 gap-1">
-            {Object.entries(PATTERN_LABEL).map(([id, label]) => {
-              const active = (slide.pattern ?? "none") === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => onChange({ pattern: id as PatternId })}
-                  aria-pressed={active}
-                  className="rounded-md border py-1.5 text-center text-[10px] font-semibold transition-all"
+        {/* ── Appearance section ───────────────────────────── */}
+        <SectionHeader
+          title="Appearance"
+          open={openAppearance}
+          onToggle={() => setOpenAppearance((v) => !v)}
+          hint="theme · pattern · scheme"
+        />
+        {openAppearance && (
+          <div className="space-y-4 border-b px-4 pb-4 pt-1">
+
+            {/* Theme — compact 5-col swatches */}
+            <div className="space-y-1.5">
+              <Label className="text-[10px] text-muted-foreground">Theme</Label>
+              <div className="grid grid-cols-5 gap-1.5">
+                {(Object.values(THEMES) as Theme[]).map((t) => {
+                  const active = themeId === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setThemeId(t.id)}
+                      aria-pressed={active}
+                      title={t.name}
+                      className="flex flex-col overflow-hidden rounded-lg transition-all"
+                      style={{
+                        boxShadow: active
+                          ? `0 0 0 2px ${t.accent}, 0 0 0 4px ${t.accent}28`
+                          : "0 0 0 1px hsl(var(--border))",
+                      }}
+                    >
+                      <span
+                        className="block h-7 w-full"
+                        style={{
+                          background: `linear-gradient(135deg, ${t.bg} 0%, ${t.bg} 50%, ${t.accent} 50%)`,
+                        }}
+                      />
+                      <span
+                        className="block truncate px-0.5 pb-1 pt-0.5 text-center text-[8px] font-semibold leading-none"
+                        style={{
+                          backgroundColor: active ? t.accent + "18" : "hsl(var(--card))",
+                          color: active ? t.accent : "hsl(var(--muted-foreground))",
+                        }}
+                      >
+                        {t.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Pattern — 3-col pill grid */}
+            <div className="space-y-2">
+              <Label className="text-[10px] text-muted-foreground">Pattern</Label>
+              <div className="grid grid-cols-3 gap-1">
+                {Object.entries(PATTERN_LABEL).map(([id, label]) => {
+                  const active = activePattern === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => onChange({ pattern: id as PatternId })}
+                      aria-pressed={active}
+                      className="rounded-lg border py-1.5 text-center text-[10px] font-semibold transition-all"
+                      style={
+                        active
+                          ? { borderColor: theme.accent, backgroundColor: theme.accent + "20", color: theme.accent }
+                          : { borderColor: "hsl(var(--border))", backgroundColor: "hsl(var(--card))", color: "hsl(var(--muted-foreground))" }
+                      }
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Intensity slider — only when a pattern is active */}
+              {activePattern !== "none" && (
+                <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+                  <Label className="shrink-0 text-[10px] text-muted-foreground">Intensity</Label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={activeIntensity}
+                    onChange={(e) => onChange({ patternIntensity: Number(e.target.value) })}
+                    className="flex-1"
+                    style={{ accentColor: theme.accent }}
+                    aria-label="Pattern intensity"
+                  />
+                  <span className="w-7 shrink-0 text-right text-[10px] tabular-nums text-muted-foreground">
+                    {activeIntensity}%
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Color scheme toggle */}
+            <div className="space-y-1.5">
+              <Label className="text-[10px] text-muted-foreground">Color scheme</Label>
+              <button
+                type="button"
+                onClick={() => onChange({ inverted: !slide.inverted })}
+                className="flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all"
+                style={
+                  slide.inverted
+                    ? { borderColor: theme.accent, backgroundColor: theme.bgAlt, color: theme.fgAlt }
+                    : { borderColor: "hsl(var(--border))", backgroundColor: "hsl(var(--background))" }
+                }
+                aria-pressed={!!slide.inverted}
+              >
+                <span
+                  className="h-8 w-8 shrink-0 rounded-lg border border-white/10 shadow-sm"
+                  style={{
+                    background: slide.inverted
+                      ? `linear-gradient(135deg, ${theme.bgAlt} 50%, ${theme.accent} 50%)`
+                      : `linear-gradient(135deg, ${theme.bg} 50%, ${theme.accent} 50%)`,
+                  }}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs font-semibold leading-snug">
+                    {slide.inverted ? "Inverted" : "Normal"}
+                  </span>
+                  <span
+                    className="block text-[11px] leading-snug"
+                    style={{ color: slide.inverted ? theme.fgAlt + "99" : "hsl(var(--muted-foreground))" }}
+                  >
+                    {slide.inverted ? "Alt background" : "Default background"}
+                  </span>
+                </span>
+                <span
+                  className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
                   style={
-                    active
-                      ? { borderColor: theme.accent, backgroundColor: theme.accent + "22", color: theme.accent }
-                      : { borderColor: "hsl(var(--border))", backgroundColor: "hsl(var(--card))", color: "hsl(var(--muted-foreground))" }
+                    slide.inverted
+                      ? { backgroundColor: theme.accent + "33", color: theme.accent }
+                      : { backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
                   }
                 >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-
-          {(slide.pattern ?? "none") !== "none" && (
-            <div className="space-y-1 pt-0.5">
-              <div className="flex items-center justify-between">
-                <Label className="text-[11px] text-muted-foreground">Intensity</Label>
-                <span className="text-[11px] tabular-nums text-muted-foreground">
-                  {slide.patternIntensity ?? 50}%
+                  {slide.inverted ? "on" : "off"}
                 </span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Content section ──────────────────────────────── */}
+        <SectionHeader
+          title="Content"
+          open={openContent}
+          onToggle={() => setOpenContent((v) => !v)}
+          hint="layout · text"
+        />
+        {openContent && (
+          <div className="space-y-3 border-b px-4 pb-4 pt-1">
+            {/* Layout */}
+            <div className="space-y-1.5">
+              <Label className="text-[10px] text-muted-foreground">Layout</Label>
+              <Select
+                value={slide.layout}
+                onValueChange={(layout) => {
+                  const next = layout as SlideLayout;
+                  onChange({
+                    layout: next,
+                    transforms: undefined,
+                    screenshotSecondary:
+                      next === "two-devices" ? slide.screenshotSecondary || slide.screenshot : undefined,
+                  });
+                }}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(LAYOUT_LABEL).map(([layout, label]) => (
+                    <SelectItem key={layout} value={layout} className="text-xs">
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Label */}
+            {!isFeatureGraphic && (
+              <div className="space-y-1.5">
+                <Label className="text-[10px] text-muted-foreground">Label</Label>
+                <Input
+                  value={localeLabel}
+                  onChange={(e) => setLocaleField("label", e.target.value)}
+                  placeholder={labelPlaceholder}
+                  className="h-8 text-xs"
+                />
               </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={1}
-                value={slide.patternIntensity ?? 50}
-                onChange={(e) => onChange({ patternIntensity: Number(e.target.value) })}
-                className="w-full accent-current"
-                style={{ accentColor: theme.accent }}
-                aria-label="Pattern intensity"
+            )}
+
+            {/* Headline */}
+            <div className="space-y-1.5">
+              <div className="flex items-baseline justify-between">
+                <Label className="text-[10px] text-muted-foreground">
+                  {isFeatureGraphic ? "Tagline" : "Headline"}
+                </Label>
+                <span className="text-[9px] text-muted-foreground/60">newline = break</span>
+              </div>
+              <Textarea
+                value={localeHeadline}
+                onChange={(e) => setLocaleField("headline", e.target.value)}
+                rows={3}
+                placeholder={headlinePlaceholder}
+                className="resize-none text-xs"
               />
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        <div className="h-px bg-border" />
-
-        <div className="space-y-1.5">
-          <Label className="text-xs">Layout</Label>
-          <Select
-            value={slide.layout}
-            onValueChange={(layout) => {
-              const next = layout as SlideLayout;
-              onChange({
-                layout: next,
-                transforms: undefined,
-                screenshotSecondary:
-                  next === "two-devices" ? slide.screenshotSecondary || slide.screenshot : undefined,
-              });
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(LAYOUT_LABEL).map(([layout, label]) => (
-                <SelectItem key={layout} value={layout}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Invert toggle */}
-        <div className="space-y-1.5">
-          <Label className="text-xs">Color scheme</Label>
-          <button
-            type="button"
-            onClick={() => onChange({ inverted: !slide.inverted })}
-            className="flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-all"
-            style={
-              slide.inverted
-                ? {
-                    borderColor: "transparent",
-                    boxShadow: `0 0 0 2px ${theme.accent}`,
-                    backgroundColor: theme.bgAlt,
-                    color: theme.fgAlt,
-                  }
-                : { borderColor: "hsl(var(--border))", backgroundColor: "hsl(var(--background))" }
-            }
-            aria-pressed={!!slide.inverted}
-          >
-            {/* Two-tone swatch */}
-            <span
-              className="h-8 w-8 shrink-0 rounded-md border border-white/10 shadow-sm"
-              style={{
-                background: slide.inverted
-                  ? `linear-gradient(135deg, ${theme.bgAlt} 50%, ${theme.accent} 50%)`
-                  : `linear-gradient(135deg, ${theme.bg} 50%, ${theme.accent} 50%)`,
-              }}
+        {/* ── Media section ────────────────────────────────── */}
+        {hasMedia && (
+          <>
+            <SectionHeader
+              title="Media"
+              open={openMedia}
+              onToggle={() => setOpenMedia((v) => !v)}
+              hint="screenshots"
             />
-            <span className="min-w-0 flex-1">
-              <span className="block text-xs font-semibold leading-snug">
-                {slide.inverted ? "Inverted" : "Normal"}
-              </span>
-              <span
-                className="block text-[11px] leading-snug"
-                style={{ color: slide.inverted ? theme.fgAlt + "99" : undefined }}
-              >
-                {slide.inverted
-                  ? `${theme.bgAlt} background`
-                  : `${theme.bg} background`}
-              </span>
-            </span>
-            {/* Pill badge */}
-            <span
-              className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold"
-              style={
-                slide.inverted
-                  ? { backgroundColor: theme.accent + "33", color: theme.accent }
-                  : { backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
-              }
-            >
-              {slide.inverted ? "on" : "off"}
-            </span>
-          </button>
-          <p className="text-[11px] text-muted-foreground">
-            Swaps the slide to the theme&apos;s alternate color pair. Mix inverted and normal slides for visual rhythm.
-          </p>
-        </div>
+            {openMedia && (
+              <div className="space-y-3 border-b px-4 pb-4 pt-1">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] text-muted-foreground">
+                    {slide.layout === "two-devices" ? "Front screenshot" : "Screenshot"}
+                  </Label>
+                  <ScreenshotPicker
+                    label="Primary"
+                    value={slide.screenshot}
+                    onChange={(v) => onChange({ screenshot: v })}
+                  />
+                </div>
+                {slide.layout === "two-devices" && (
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] text-muted-foreground">Back screenshot</Label>
+                    <ScreenshotPicker
+                      label="Secondary (back layer)"
+                      value={slide.screenshotSecondary || ""}
+                      onChange={(v) => onChange({ screenshotSecondary: v })}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
 
+        {/* ── Elements section ─────────────────────────────── */}
         {!isFeatureGraphic && (
-          <div className="space-y-1.5">
-            <Label className="text-xs">Label</Label>
-            <Input
-              value={localeLabel}
-              onChange={(e) => setLocaleField("label", e.target.value)}
-              placeholder={labelPlaceholder}
+          <>
+            <SectionHeader
+              title="Elements"
+              open={openElements}
+              onToggle={() => setOpenElements((v) => !v)}
+              hint="rotation · layers"
             />
-          </div>
+            {openElements && (
+              <div className="border-b px-4 pb-4 pt-1">
+                <ElementTransformControls
+                  slide={slide}
+                  selectedElementId={selectedElementId}
+                  onChange={onChange}
+                />
+              </div>
+            )}
+          </>
         )}
 
-        <div className="space-y-1.5">
-          <div className="flex items-baseline justify-between">
-            <Label className="text-xs">{isFeatureGraphic ? "Tagline" : "Headline"}</Label>
-            <span className="text-[10px] text-muted-foreground">newline = break</span>
-          </div>
-          <Textarea
-            value={localeHeadline}
-            onChange={(e) => setLocaleField("headline", e.target.value)}
-            rows={3}
-            placeholder={headlinePlaceholder}
-          />
-        </div>
-
-        {!isFeatureGraphic && !isNoDevice && (
-          <div className="space-y-1.5">
-            <Label className="text-xs">
-              {slide.layout === "two-devices" ? "Front device screenshot" : "Screenshot"}
-            </Label>
-            <ScreenshotPicker
-              label="Primary"
-              value={slide.screenshot}
-              onChange={(v) => onChange({ screenshot: v })}
-            />
-          </div>
-        )}
-
-        {slide.layout === "two-devices" && (
-          <div className="space-y-1.5">
-            <Label className="text-xs">Back device screenshot</Label>
-            <ScreenshotPicker
-              label="Secondary (back layer)"
-              value={slide.screenshotSecondary || ""}
-              onChange={(v) => onChange({ screenshotSecondary: v })}
-            />
-          </div>
-        )}
-
-        {!isFeatureGraphic && (
-          <ElementTransformControls
-            slide={slide}
-            selectedElementId={selectedElementId}
-            onChange={onChange}
-          />
-        )}
-
+        {/* Feature-graphic note */}
         {isFeatureGraphic && (
-          <p className="rounded-md border bg-muted/40 p-3 text-[11px] leading-relaxed text-muted-foreground">
-            Shows app icon + name + tagline. Drop an icon at <span className="rounded bg-background px-1 py-0.5 font-mono text-[10px] text-foreground">/public/app-icon.png</span> (or leave blank — the app initial will be used). Name is set in the toolbar.
-          </p>
+          <div className="px-4 py-3">
+            <p className="rounded-xl border bg-muted/40 p-3 text-[11px] leading-relaxed text-muted-foreground">
+              Shows app icon + name + tagline. Drop an icon at{" "}
+              <span className="rounded bg-background px-1 py-0.5 font-mono text-[10px] text-foreground">
+                /public/app-icon.png
+              </span>{" "}
+              (or leave blank — the app initial will be used). Name is set in the toolbar.
+            </p>
+          </div>
         )}
+
       </div>
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────
+// Helper components (unchanged)
+// ─────────────────────────────────────────────────────────
 
 function ElementTransformControls({
   slide,
@@ -440,13 +480,12 @@ function ElementTransformControls({
 
   function patchElement(id: ElementId, patch: Partial<ElementTransform>) {
     const cur = transforms[id];
-    if (!cur) return; // can only adjust after user moves/resizes (default rect lives in slide-canvas)
+    if (!cur) return;
     onChange({
       transforms: { ...transforms, [id]: { ...cur, ...patch } },
     });
   }
 
-  // Z-order: re-rank zIndex among present elements so they remain contiguous.
   function reorder(id: ElementId, dir: "front" | "back" | "up" | "down") {
     const ranked = [...present].sort((a, b) => {
       const za = transforms[a]?.zIndex ?? defaultZ(a);
@@ -466,22 +505,19 @@ function ElementTransformControls({
     const next = { ...transforms };
     ranked.forEach((eid, i) => {
       const cur = next[eid];
-      if (!cur) return; // skip if user hasn't engaged this element yet
+      if (!cur) return;
       next[eid] = { ...cur, zIndex: i + 1 };
     });
     onChange({ transforms: next });
   }
 
   return (
-    <div className="space-y-3 rounded-md border bg-muted/30 p-3">
-      <div>
-        <Label className="text-xs font-semibold">Elements</Label>
-        <p className="text-[11px] text-muted-foreground">
-          {activeId
-            ? "Fine-tune the selected element's rotation and stacking."
-            : "Click an element on the canvas to fine-tune its rotation and stacking."}
-        </p>
-      </div>
+    <div className="space-y-3 rounded-xl border bg-muted/20 p-3">
+      <p className="text-[11px] text-muted-foreground">
+        {activeId
+          ? "Fine-tune the selected element's rotation and stacking."
+          : "Click an element on the canvas to fine-tune its rotation and stacking."}
+      </p>
 
       {activeId ? (
         <ActiveElementPanel
@@ -491,7 +527,7 @@ function ElementTransformControls({
           onReorder={(dir) => reorder(activeId, dir)}
         />
       ) : (
-        <div className="rounded border border-dashed bg-background/40 p-4 text-center text-[11px] text-muted-foreground">
+        <div className="rounded-lg border border-dashed bg-background/40 p-4 text-center text-[11px] text-muted-foreground">
           No element selected
         </div>
       )}
@@ -514,7 +550,7 @@ function ActiveElementPanel({
   const rotation = transform?.rotation ?? 0;
   const label = ELEMENT_LABEL[activeId];
   return (
-    <div className="space-y-2 rounded border bg-background/60 p-2.5">
+    <div className="space-y-3 rounded-lg border bg-background/60 p-2.5">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium">{label}</span>
         {!engaged && (
@@ -527,9 +563,7 @@ function ActiveElementPanel({
           <Label className="flex items-center gap-1 text-[11px] text-muted-foreground">
             <RotateCw className="h-3 w-3" /> Rotation
           </Label>
-          <span className="text-[11px] tabular-nums text-muted-foreground">
-            {rotation}°
-          </span>
+          <span className="text-[11px] tabular-nums text-muted-foreground">{rotation}°</span>
         </div>
         <input
           type="range"
@@ -545,7 +579,7 @@ function ActiveElementPanel({
       </div>
 
       <div className="space-y-1">
-        <Label className="text-[11px] text-muted-foreground">Layer</Label>
+        <Label className="text-[11px] text-muted-foreground">Layer order</Label>
         <div className="grid grid-cols-4 gap-1">
           <LayerButton disabled={!engaged} onClick={() => onReorder("back")} label="Send to back">
             <ArrowDownToLine className="h-3.5 w-3.5" />
@@ -595,5 +629,5 @@ function LayerButton({
 function defaultZ(id: ElementId): number {
   if (id === "deviceSecondary") return 2;
   if (id === "device") return 3;
-  return 4; // caption on top
+  return 4;
 }

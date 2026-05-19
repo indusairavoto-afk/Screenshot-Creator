@@ -1,6 +1,6 @@
 {
   "appName": "My App",
-  "themeId": "midnight",
+  "themeId": "ocean-fresh",
   "locales": [
     "en"
   ],
@@ -31,8 +31,8 @@
           }
         },
         "inverted": false,
-        "pattern": "glow",
-        "patternIntensity": 70
+        "pattern": "glass",
+        "patternIntensity": 55
       },
       {
         "id": "s_mpc7phxa_1",
