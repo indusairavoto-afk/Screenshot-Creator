@@ -50,7 +50,17 @@ export type Slide = {
   transforms?: Partial<Record<ElementId, ElementTransform>>;
 };
 
-export type ThemeId = "clean-light" | "dark-bold" | "warm-editorial" | "ocean-fresh";
+export type ThemeId =
+  | "clean-light"
+  | "dark-bold"
+  | "warm-editorial"
+  | "ocean-fresh"
+  | "midnight"
+  | "rose"
+  | "forest"
+  | "sunset"
+  | "arctic"
+  | "neon";
 
 export type Theme = {
   id: ThemeId;

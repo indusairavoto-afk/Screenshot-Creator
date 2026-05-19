@@ -12,15 +12,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { LAYOUT_HINT, LAYOUT_LABEL } from "@/lib/constants";
+import { LAYOUT_HINT, LAYOUT_LABEL, THEMES } from "@/lib/constants";
 import { pickText, writeLocalized } from "@/lib/locale";
-import type { ElementId, ElementTransform, Slide, SlideLayout, Theme } from "@/lib/types";
+import type { ElementId, ElementTransform, Slide, SlideLayout, Theme, ThemeId } from "@/lib/types";
 import { ScreenshotPicker } from "./screenshot-picker";
 
 type Props = {
   slide: Slide;
   locale: string;
   theme: Theme;
+  themeId: ThemeId;
+  setThemeId: (v: ThemeId) => void;
   selectedElementId: ElementId | null;
   onChange: (patch: Partial<Slide>) => void;
 };
@@ -31,7 +33,7 @@ const ELEMENT_LABEL: Record<ElementId, string> = {
   deviceSecondary: "Back device",
 };
 
-export function Inspector({ slide, locale, theme, selectedElementId, onChange }: Props) {
+export function Inspector({ slide, locale, theme, themeId, setThemeId, selectedElementId, onChange }: Props) {
   const isFeatureGraphic = slide.layout === "feature-graphic";
   const isNoDevice = slide.layout === "no-device";
   const localeLabel = slide.label?.[locale] ?? "";
@@ -61,6 +63,62 @@ export function Inspector({ slide, locale, theme, selectedElementId, onChange }:
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto p-3">
+
+        {/* ── Theme picker ─────────────────────────────────── */}
+        <div className="space-y-2">
+          <Label className="text-xs">Theme</Label>
+          <div className="grid grid-cols-2 gap-1.5">
+            {(Object.values(THEMES) as Theme[]).map((t) => {
+              const active = themeId === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setThemeId(t.id)}
+                  aria-pressed={active}
+                  title={t.name}
+                  className="group relative flex flex-col overflow-hidden rounded-lg transition-all"
+                  style={{
+                    boxShadow: active
+                      ? `0 0 0 2px ${t.accent}, 0 0 0 4px ${t.accent}30`
+                      : "0 0 0 1px hsl(var(--border))",
+                  }}
+                >
+                  {/* Color strip */}
+                  <span
+                    className="block h-8 w-full"
+                    style={{
+                      background: `linear-gradient(110deg, ${t.bg} 0%, ${t.bg} 55%, ${t.accent} 55%, ${t.accent} 75%, ${t.bgAlt} 75%)`,
+                    }}
+                  />
+                  {/* Name row */}
+                  <span
+                    className="flex items-center justify-between px-2 py-1"
+                    style={{
+                      backgroundColor: active ? t.accent + "18" : "hsl(var(--card))",
+                    }}
+                  >
+                    <span
+                      className="truncate text-[10px] font-semibold leading-none"
+                      style={{ color: active ? t.accent : "hsl(var(--foreground))" }}
+                    >
+                      {t.name}
+                    </span>
+                    {active && (
+                      <span
+                        className="ml-1 h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: t.accent }}
+                      />
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="h-px bg-border" />
+
         <div className="space-y-1.5">
           <Label className="text-xs">Layout</Label>
           <Select

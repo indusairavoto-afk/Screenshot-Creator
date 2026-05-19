@@ -1,6 +1,6 @@
 {
   "appName": "My App",
-  "themeId": "ocean-fresh",
+  "themeId": "rose",
   "locales": [
     "en"
   ],
@@ -12,7 +12,7 @@
     "iphone": [
       {
         "id": "s_mpc7phxa_0",
-        "layout": "two-devices",
+        "layout": "hero",
         "label": {
           "en": "MEET YOUR APP"
         },
@@ -20,8 +20,17 @@
           "en": "Sell one\nidea per slide."
         },
         "screenshot": "",
-        "inverted": false,
-        "screenshotSecondary": ""
+        "transforms": {
+          "device": {
+            "x": 118.3305258774749,
+            "y": 669.920704776601,
+            "width": 1013.6355043227666,
+            "height": 2064.96,
+            "rotation": -180,
+            "zIndex": 3
+          }
+        },
+        "inverted": false
       },
       {
         "id": "s_mpc7phxa_1",
@@ -32,7 +41,8 @@
         "headline": {
           "en": "Your headline\nlives here."
         },
-        "screenshot": ""
+        "screenshot": "",
+        "inverted": true
       },
       {
         "id": "s_mpc7phxa_2",

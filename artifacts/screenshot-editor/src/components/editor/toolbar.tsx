@@ -20,11 +20,10 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DEVICE_LABEL,
-  THEMES,
   supportsLandscape,
 } from "@/lib/constants";
 import { detectPlatform } from "@/lib/defaults";
-import type { Device, Orientation, ThemeId } from "@/lib/types";
+import type { Device, Orientation } from "@/lib/types";
 
 type Props = {
   appName: string;
@@ -36,8 +35,6 @@ type Props = {
   setDevice: (v: Device) => void;
   orientation: Orientation;
   setOrientation: (v: Orientation) => void;
-  themeId: ThemeId;
-  setThemeId: (v: ThemeId) => void;
   onExport: () => void;
   onResetAll: () => void;
   onResetDevice: () => void;
@@ -152,44 +149,6 @@ export function Toolbar(props: Props) {
           </SelectContent>
         </Select>
       )}
-
-      <span aria-hidden className="mx-1 h-5 w-px bg-border" />
-
-      {/* Theme swatches */}
-      <div className="flex items-center gap-1" role="group" aria-label="Theme">
-        {(Object.values(THEMES) as { id: string; name: string; bg: string; accent: string }[]).map((t) => {
-          const active = props.themeId === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              title={t.name}
-              aria-label={t.name}
-              aria-pressed={active}
-              disabled={props.busy}
-              onClick={() => props.setThemeId(t.id as ThemeId)}
-              className="relative h-6 w-6 rounded-full border-2 transition-all disabled:pointer-events-none disabled:opacity-40"
-              style={{
-                background: `linear-gradient(135deg, ${t.bg} 50%, ${t.accent} 50%)`,
-                borderColor: active ? t.accent : "transparent",
-                boxShadow: active ? `0 0 0 2px ${t.accent}40` : undefined,
-              }}
-            >
-              {active && (
-                <span
-                  className="absolute inset-0 flex items-center justify-center"
-                  aria-hidden
-                >
-                  <span
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ background: t.accent }}
-                  />
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <SaveStatus savedAt={props.savedAt} saveError={props.saveError} />
