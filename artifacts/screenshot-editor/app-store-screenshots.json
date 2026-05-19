@@ -1,6 +1,6 @@
 {
   "appName": "My App",
-  "themeId": "ocean-fresh",
+  "themeId": "arctic",
   "locales": [
     "en"
   ],
@@ -31,7 +31,7 @@
           }
         },
         "inverted": false,
-        "pattern": "glass",
+        "pattern": "grid",
         "patternIntensity": 55
       },
       {
