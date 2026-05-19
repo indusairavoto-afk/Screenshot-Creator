@@ -14,12 +14,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { LAYOUT_HINT, LAYOUT_LABEL } from "@/lib/constants";
 import { pickText, writeLocalized } from "@/lib/locale";
-import type { ElementId, ElementTransform, Slide, SlideLayout } from "@/lib/types";
+import type { ElementId, ElementTransform, Slide, SlideLayout, Theme } from "@/lib/types";
 import { ScreenshotPicker } from "./screenshot-picker";
 
 type Props = {
   slide: Slide;
   locale: string;
+  theme: Theme;
   selectedElementId: ElementId | null;
   onChange: (patch: Partial<Slide>) => void;
 };
@@ -30,7 +31,7 @@ const ELEMENT_LABEL: Record<ElementId, string> = {
   deviceSecondary: "Back device",
 };
 
-export function Inspector({ slide, locale, selectedElementId, onChange }: Props) {
+export function Inspector({ slide, locale, theme, selectedElementId, onChange }: Props) {
   const isFeatureGraphic = slide.layout === "feature-graphic";
   const isNoDevice = slide.layout === "no-device";
   const localeLabel = slide.label?.[locale] ?? "";
@@ -85,6 +86,64 @@ export function Inspector({ slide, locale, selectedElementId, onChange }: Props)
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Invert toggle */}
+        <div className="space-y-1.5">
+          <Label className="text-xs">Color scheme</Label>
+          <button
+            type="button"
+            onClick={() => onChange({ inverted: !slide.inverted })}
+            className="flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-all"
+            style={
+              slide.inverted
+                ? {
+                    borderColor: "transparent",
+                    boxShadow: `0 0 0 2px ${theme.accent}`,
+                    backgroundColor: theme.bgAlt,
+                    color: theme.fgAlt,
+                  }
+                : { borderColor: "hsl(var(--border))", backgroundColor: "hsl(var(--background))" }
+            }
+            aria-pressed={!!slide.inverted}
+          >
+            {/* Two-tone swatch */}
+            <span
+              className="h-8 w-8 shrink-0 rounded-md border border-white/10 shadow-sm"
+              style={{
+                background: slide.inverted
+                  ? `linear-gradient(135deg, ${theme.bgAlt} 50%, ${theme.accent} 50%)`
+                  : `linear-gradient(135deg, ${theme.bg} 50%, ${theme.accent} 50%)`,
+              }}
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs font-semibold leading-snug">
+                {slide.inverted ? "Inverted" : "Normal"}
+              </span>
+              <span
+                className="block text-[11px] leading-snug"
+                style={{ color: slide.inverted ? theme.fgAlt + "99" : undefined }}
+              >
+                {slide.inverted
+                  ? `${theme.bgAlt} background`
+                  : `${theme.bg} background`}
+              </span>
+            </span>
+            {/* Pill badge */}
+            <span
+              className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+              style={
+                slide.inverted
+                  ? { backgroundColor: theme.accent + "33", color: theme.accent }
+                  : { backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }
+              }
+            >
+              {slide.inverted ? "on" : "off"}
+            </span>
+          </button>
+          <p className="text-[11px] text-muted-foreground">
+            Swaps the slide to the theme&apos;s alternate color pair. Mix inverted and normal slides for visual rhythm.
+          </p>
         </div>
 
         {!isFeatureGraphic && (

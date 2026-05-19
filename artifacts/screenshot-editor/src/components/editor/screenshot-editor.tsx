@@ -506,6 +506,7 @@ export function ScreenshotEditor() {
             <Inspector
               slide={activeSlide}
               locale={state.locale}
+              theme={theme}
               selectedElementId={selectedElementId}
               onChange={(patch) => patchSlide(activeSlide.id, patch)}
             />

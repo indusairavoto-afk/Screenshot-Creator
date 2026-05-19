@@ -1,6 +1,6 @@
 {
   "appName": "My App",
-  "themeId": "clean-light",
+  "themeId": "ocean-fresh",
   "locales": [
     "en"
   ],
@@ -12,7 +12,7 @@
     "iphone": [
       {
         "id": "s_mpc7phxa_0",
-        "layout": "hero",
+        "layout": "two-devices",
         "label": {
           "en": "MEET YOUR APP"
         },
@@ -20,16 +20,8 @@
           "en": "Sell one\nidea per slide."
         },
         "screenshot": "",
-        "transforms": {
-          "device": {
-            "x": 153.18224783861672,
-            "y": 1112.7839999999999,
-            "width": 1013.6355043227666,
-            "height": 2064.96,
-            "rotation": 0,
-            "zIndex": 3
-          }
-        }
+        "inverted": false,
+        "screenshotSecondary": ""
       },
       {
         "id": "s_mpc7phxa_1",
