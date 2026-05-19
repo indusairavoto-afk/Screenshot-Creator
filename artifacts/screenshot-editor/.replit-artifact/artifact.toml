@@ -1,0 +1,21 @@
+kind = "web"
+previewPath = "/"
+title = "App Store Screenshots"
+version = "1.0.0"
+id = "screenshot-editor"
+
+[[services]]
+localPort = 3000
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/screenshot-editor run dev"
+
+[services.production]
+
+[services.production.build]
+args = ["pnpm", "--filter", "@workspace/screenshot-editor", "run", "build"]
+
+[services.production.build.env]
+NODE_ENV = "production"

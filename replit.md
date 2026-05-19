@@ -1,36 +1,49 @@
-# [Project name]
+# App Store Screenshots Editor
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A full web app for designing and exporting production-ready App Store and Google Play screenshots. Design slides as advertisements, then export them at every required resolution in a single zip.
 
 ## Run & Operate
 
+- `pnpm --filter @workspace/screenshot-editor run dev` — run the screenshot editor (port 3000, served at `/`)
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Screenshot Editor: Next.js 15 + React 19 + Tailwind CSS 3 + ShadCN UI
+- Drag-to-reorder: @dnd-kit
+- Export: html-to-image + JSZip
+- API: Express 5 (api-server)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/screenshot-editor/` — Next.js screenshot editor app (served at `/`)
+- `artifacts/screenshot-editor/src/components/editor/` — all editor components
+- `artifacts/screenshot-editor/src/lib/` — types, constants, themes, storage, locale
+- `artifacts/screenshot-editor/public/mockup.png` — iPhone frame PNG (do NOT replace)
+- `artifacts/screenshot-editor/src/app/api/project/` — GET/POST project state to disk
+- `artifacts/screenshot-editor/src/app/api/upload/` — upload screenshot PNGs
+- `app-store-screenshots.json` — auto-saved project state (git-trackable)
+- `artifacts/api-server/` — Express backend (served at `/api`)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Screenshot editor is a standalone Next.js app, not a Vite SPA, because it needs server-side API routes for file read/write (project persistence + screenshot upload).
+- Project state autosaves to both localStorage (instant) and `app-store-screenshots.json` on disk (git-portable). File takes priority on hydration.
+- All images are preloaded as base64 data URIs before export to avoid race conditions with html-to-image.
+- Device frames are pure CSS/HTML — no extra PNGs needed except the iPhone bezel (`mockup.png`).
+- Export produces a zip with full resolution PNGs organized by platform/device/size/locale.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Design App Store (iPhone, iPad) and Google Play (Android Phone, 7"/10" Tablet, Feature Graphic) screenshots
+- 7 slide layouts: hero, device-bottom, device-top, two-devices, no-device, split-landscape, feature-graphic
+- 4 built-in themes: Clean Light, Dark Bold, Warm Editorial, Ocean Fresh
+- Drag-to-reorder slides, inline text editing, layout/theme switcher per slide
+- Drop-target screenshot picker (uploaded files saved to `public/screenshots/uploaded/`)
+- One-click bulk PNG export at every Apple/Google-required resolution via html-to-image
+- Undo/redo (Cmd+Z/Shift+Cmd+Z), keyboard nav (↑↓/j/k), duplicate (Cmd+D), delete (Cmd+Delete)
+- Multi-locale support with per-slide localized copy
 
 ## User preferences
 
@@ -38,8 +51,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Do NOT replace `public/mockup.png` — the PHONE_SCREEN constants in `src/lib/constants.ts` are measured against this exact PNG.
+- Export double-call (`toPng` twice) is intentional — do not remove it.
+- The Next.js dev script uses `${PORT:-3000}` to pick up the PORT env var.
+- `minimumReleaseAge: 1440` in pnpm-workspace.yaml may block installing very new packages — add to `minimumReleaseAgeExclude` if needed.
