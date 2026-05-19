@@ -5,8 +5,8 @@ import "./globals.css";
 const font = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "App Store Screenshots",
-  description: "Design and export App Store + Google Play screenshots.",
+  title: "ScreenCraft — App Store & Google Play Screenshots",
+  description: "Design advertisement-style App Store and Google Play screenshots in your browser. Export at every required resolution with one click.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
